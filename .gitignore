@@ -1,1 +1,12 @@
+# Local environment variables (never commit real API keys)
 .env
+.env.local
+.env.*.local
+
+# Common OS, Python & Node artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+.DS_Store
