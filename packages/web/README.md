@@ -1,32 +1,45 @@
-# React + TypeScript + Vite
+# Startup Idea Validator Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React, TypeScript, and Vite frontend for the project.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The app is normally available at `http://localhost:5173`.
+
+## Production checks
+
+```powershell
+npm run lint
+npm run build
+```
+
+## Docker
+
+Build the production image from this directory:
+
+```powershell
+docker build --build-arg VITE_API_URL=http://localhost:8000 -t startup-idea-validator-web .
+```
+
+Run it on port 5173:
+
+```powershell
+docker run --rm -p 5173:80 startup-idea-validator-web
+```
+
+Open `http://localhost:5173`. The image builds the Vite bundle in a Node image, then serves the static output with Nginx. Client-side routes fall back to `index.html`.
+
+## API configuration
+
+The frontend defaults to `http://localhost:8000`. To target another API while building the image, pass the Vite variable as a build argument through your chosen Docker build setup, or create a local `.env.local` for non-container development:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+Never commit `.env.local` or credentials.
