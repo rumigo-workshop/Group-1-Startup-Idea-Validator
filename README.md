@@ -111,3 +111,11 @@ docker compose up --build
 ## Current integration note
 
 The Authors and Books frontend uses the API contract above. The backend team should confirm that its response shapes and endpoints match it before live mode is used; mock mode remains available while that integration is completed.
+
+## Run with Docker
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:5173.
