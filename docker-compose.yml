@@ -1,6 +1,8 @@
 services:
   web:
-    build: ./packages/web
+    build:
+      context: .
+      dockerfile: dockerfile
     ports:
       - "${PORT}:5173"
     env_file: .env
