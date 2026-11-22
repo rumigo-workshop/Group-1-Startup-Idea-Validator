@@ -1,122 +1,23 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 
+type Id = number | string
+type Author = { id: Id; name: string; bio: string }
+type Book = { id: Id; title: string; author_id: Id; author?: { name: string }; author_name?: string }
+const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+const examples: Author[] = [{ id: 1, name: 'Ursula K. Le Guin', bio: 'Acclaimed writer of imaginative speculative fiction.' }, { id: 2, name: 'James Baldwin', bio: 'Essayist and novelist who explored identity and social change.' }, { id: 3, name: 'Octavia E. Butler', bio: 'Pioneering science-fiction author and MacArthur Fellow.' }]
+const exampleBooks: Book[] = [{ id: 101, title: 'A Wizard of Earthsea', author_id: 1 }, { id: 102, title: 'Giovanni’s Room', author_id: 2 }, { id: 103, title: 'Kindred', author_id: 3 }]
+async function api<T>(path: string, options?: RequestInit): Promise<T> { const response = await fetch(`${apiUrl}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } }); if (!response.ok) { const body = await response.json().catch(() => null) as { detail?: string } | null; throw new Error(body?.detail || `Request failed (${response.status})`) }; return response.status === 204 ? undefined as T : response.json() as Promise<T> }
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  const [mock, setMock] = useState(true), [authors, setAuthors] = useState<Author[]>([]), [books, setBooks] = useState<Book[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState<string | null>(null), [message, setMessage] = useState<string | null>(null), [saving, setSaving] = useState('')
+  const [name, setName] = useState(''), [bio, setBio] = useState(''), [title, setTitle] = useState(''), [authorId, setAuthorId] = useState('')
+  useEffect(() => { void load() }, [mock])
+  async function load() { setLoading(true); setError(null); try { if (mock) { setAuthors(examples.map(x => ({ ...x }))); setBooks(exampleBooks.map(x => ({ ...x }))) } else { const [a, b] = await Promise.all([api<Author[]>('/authors'), api<Book[]>('/books')]); setAuthors(a); setBooks(b) } } catch (e) { setAuthors([]); setBooks([]); setError(e instanceof Error ? e.message : 'Unable to load library.') } finally { setLoading(false) } }
+  async function addAuthor(e: FormEvent) { e.preventDefault(); if (!name.trim() || !bio.trim()) return; setSaving('author'); try { const author = mock ? { id: crypto.randomUUID(), name: name.trim(), bio: bio.trim() } : await api<Author>('/authors', { method: 'POST', body: JSON.stringify({ name, bio }) }); setAuthors(x => [...x, author]); setName(''); setBio(''); setMessage(`${author.name} was added.`) } catch (e) { setError(e instanceof Error ? e.message : 'Could not add author.') } finally { setSaving('') } }
+  async function addBook(e: FormEvent) { e.preventDefault(); const author = authors.find(x => String(x.id) === authorId); if (!title.trim() || !author) return; setSaving('book'); try { const book = mock ? { id: crypto.randomUUID(), title: title.trim(), author_id: author.id } : await api<Book>('/books', { method: 'POST', body: JSON.stringify({ title, author_id: author.id }) }); setBooks(x => [...x, book]); setTitle(''); setAuthorId(''); setMessage(`“${book.title}” was added.`) } catch (e) { setError(e instanceof Error ? e.message : 'Could not add book.') } finally { setSaving('') } }
+  async function removeAuthor(author: Author) { if (!confirm(`Delete ${author.name}?`)) return; try { if (!mock) await api<void>(`/authors/${author.id}`, { method: 'DELETE' }); setAuthors(x => x.filter(a => a.id !== author.id)); setBooks(x => x.filter(b => b.author_id !== author.id)); setMessage(`${author.name} was deleted.`) } catch (e) { setError(e instanceof Error ? e.message : 'Could not delete author.') } }
+  async function removeBook(book: Book) { try { if (!mock) await api<void>(`/books/${book.id}`, { method: 'DELETE' }); setBooks(x => x.filter(b => b.id !== book.id)); setMessage(`“${book.title}” was deleted.`) } catch (e) { setError(e instanceof Error ? e.message : 'Could not delete book.') } }
+  const state = <div className="state">{loading ? 'Loading library…' : error || 'Nothing here yet.'}</div>
+  return <main className="app"><header><strong><b>B</b> Bookcase</strong><div className="mode"><span className={mock ? 'active' : ''}>Mock data</span><button role="switch" aria-checked={mock} className={mock ? 'on' : ''} onClick={() => setMock(x => !x)}><i /></button><span className={!mock ? 'active' : ''}>Live API</span></div></header><section className="hero"><p>YOUR READING ROOM</p><h1>Authors and books,<br /><em>beautifully organized.</em></h1><span>Build a small, thoughtful library and keep every great voice close at hand.</span></section>{message && <div className="notice" role="status">{message}<button onClick={() => setMessage(null)}>×</button></div>}{error && !loading && <div className="notice error" role="alert">{error}<button onClick={() => setError(null)}>×</button></div>}<section className="grid"><article><div className="heading"><div><p>PEOPLE</p><h2>Authors <small>{authors.length}</small></h2></div><button className="refresh" onClick={() => void load()}>↻ Refresh</button></div><form onSubmit={addAuthor}><label>Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Toni Morrison" required /></label><label>Bio<textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="A short introduction..." required /></label><button disabled={saving === 'author'}>{saving === 'author' ? 'Adding…' : 'Add author →'}</button></form><div className="list">{loading || error ? state : authors.length ? authors.map(a => <div className="row" key={a.id}><b className="avatar">{a.name[0]}</b><div><h3>{a.name}</h3><span>{a.bio}</span></div><button className="delete" onClick={() => void removeAuthor(a)}>×</button></div>) : state}</div></article><article><div className="heading"><div><p>COLLECTION</p><h2>Books <small>{books.length}</small></h2></div></div><form onSubmit={addBook}><label>Title<input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Beloved" required /></label><label>Written by<select value={authorId} onChange={e => setAuthorId(e.target.value)} required><option value="">Choose an author</option>{authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label><button disabled={saving === 'book' || !authors.length}>{saving === 'book' ? 'Adding…' : 'Add book →'}</button></form><div className="list">{loading || error ? state : books.length ? books.map(b => <div className="row" key={b.id}><b className="spine" /><div><span className="by">{b.author_name || b.author?.name || authors.find(a => a.id === b.author_id)?.name || 'Unknown author'}</span><h3>{b.title}</h3></div><button className="delete" onClick={() => void removeBook(b)}>×</button></div>) : state}</div></article></section></main>
 }
-
 export default App
