@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    depends_on: ["search"]
+    container_name: ${WEB_NAME}
+    env_file: ./.env
+    ports:
+      - ${PORT}:5173
+    volumes:
+      - ./tmp:/app
+
+  search:
+    image: searxng/searxng:latest
+    container_name: ${SEARCH_NAME}
+    env_file: ./.env
+    ports:
+      - ${SPORT}:8080
